@@ -1,16 +1,47 @@
-Stripes win big in sequential i/o, which is not surprise.  900k > 500k
-Mirrors loose big in sequential i/o, which is not surprise.  200k < 500k
+
+Some runs with bonnie++ 1.04.  bonnie++ -s 100g -n 256
+These settings ensured bonnie++ ran long enough to not be susceptible to 
+jitter, but would complete on about an hour per run.
+
+NB:  This is designed to inform smaller shops.  Thinking that what works
+for Oracle or Joyent in Mainframe class iron may not apply to those of us
+who want to do the best we can with what we've got.
+
+That said, I run OpenIndiana (latest) on ESXi 6.5  It's the only guest.
+(Well OK, there's a very small data transfer guest that allows USB transfer
+without the USB device seeing OI.)  I do this because the web interface to ESXi
+is now so good, that a notion of a separate console is not necessary.  I never
+use KVM, so I don't care about that lack.  All of the SAS controllers are passed
+directly through to the OI guest.  But not the network devices.  I use the VMXnet3
+devices to get 10G.  ESXi drives the Mellanox 10G interface.  Mellanox are $20 on Ebay.
+Intel are $200.  There's 32GB of RAM on the physical server, with 30GB dedicated to OI.
+
+I'm able to do this testing as I'm in the middle of swapping out the SATA drives with
+SAS.  So, the SAS drives and the SATA SSDs are unused at the moment.  24/Jan/2017.
+
+See the "diot" script to see how I ran the tests and what the ZFS layouts were.
+I tested stripes, mirrors, raidz and raidz2.  4 drives.  I added logs, mirrored logs and caches.
+3 SATA SSDs.
+
+On to the opinions:  For the results see the .html or .xls files in this repo.  Cheers!
+
+Stripes win big in sequential i/o, which is no surprise.  900k > 500k
+Mirrors loose big in sequential i/o, which is no surprise.  200k < 500k
 Raidz is better than mirrored stripes, which is interesting.  230k > 200k
 
 Stripes loose in deletions, while mirrors win, very interesting. 60k > 50K
 Raidz and mirrored stripes hold up the middle.  55k
+
+All other combinations are a wash  +/- 10%.
+
+Numbers are data or creates per second.
 
 Caching helps, but only so far.  2 cache devices nearly always is 1-2% worse
 than just one.
 
 Logging helps, again, only so far.  Mirroring logs costs 1-2% always.
 
-Test settings, script and csv results are on github.com/SamCN/zfs-stats
+Again, test settings, script and csv results are on github.com/SamCN/zfs-stats
 
 Conclusion:  If I believe that there is redundancy and safety space between
 single ssd error and the actual disks, I'll use raidz2 and a single cache
