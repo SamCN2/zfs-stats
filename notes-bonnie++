@@ -1,0 +1,28 @@
+Stripes win big in sequential i/o, which is not surprise.  900k > 500k
+Mirrors loose big in sequential i/o, which is not surprise.  200k < 500k
+Raidz is better than mirrored stripes, which is interesting.  230k > 200k
+
+Stripes loose in deletions, while mirrors win, very interesting. 60k > 50K
+Raidz and mirrored stripes hold up the middle.  55k
+
+Caching helps, but only so far.  2 cache devices nearly always is 1-2% worse
+than just one.
+
+Logging helps, again, only so far.  Mirroring logs costs 1-2% always.
+
+Test settings, script and csv results are on github.com/SamCN/zfs-stats
+
+Conclusion:  If I believe that there is redundancy and safety space between
+single ssd error and the actual disks, I'll use raidz2 and a single cache
+and a single ZIL device.  If I don't, the cost for the extra redundancy in the
+ZIL is at most 1-2%.  But the cost for multiple caches is never worth it.
+
+zfs create pool raidz2 ${devices} cache ${ssdevice0}  log ${ssdevice1}
+
+NB:  There are times when the cache actually hurts the thing it isn't supposed
+to affect, writes.  More runs will be needed to see what's going on.  2x cache
+hurts more.  I think it's due to needing to read a bit before writing, and
+having too many choices...
+
+NB:  Bonnie++ doesn't have a test that accurately models a web server.  And
+Next: I'm going to use the iozone.org kit for the more detailed graphs.
